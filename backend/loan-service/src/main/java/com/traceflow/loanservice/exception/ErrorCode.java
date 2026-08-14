@@ -1,0 +1,12 @@
+package com.traceflow.loanservice.exception;
+
+public enum ErrorCode {
+    LOAN_APPLICATION_NOT_FOUND,
+    INVALID_STATUS_TRANSITION,
+    INVALID_DECISION,
+    CUSTOMER_SERVICE_UNAVAILABLE,
+    DISBURSEMENT_GATEWAY_TIMEOUT,
+    VALIDATION_ERROR,
+    INTERNAL_ERROR
+}
+

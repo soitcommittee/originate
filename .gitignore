@@ -1,0 +1,9 @@
+.DS_Store
+.idea/
+.vscode/
+**/.gradle/
+**/build/
+frontend/node_modules/
+frontend/dist/
+*.log
+

@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-service
+  labels:
+    app.kubernetes.io/name: customer-service
+    app.kubernetes.io/part-of: originate
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: customer-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: customer-service
+        app.kubernetes.io/part-of: originate
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      containers:
+        - name: customer-service
+          image: ghcr.io/chiewhui1113/originate-customer-service:sha-1a34573f3894b261a094671df4c9616a2891cc92
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8081
+          env:
+            - name: SERVER_PORT
+              value: "8081"
+            - name: APP_CORS_ALLOWED_ORIGIN
+              valueFrom:
+                configMapKeyRef:
+                  name: originate-config
+                  key: CORS_ALLOWED_ORIGIN
+          readinessProbe:
+            httpGet:
+              path: /api/customers
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /api/customers
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-service
+  labels:
+    app.kubernetes.io/name: customer-service
+    app.kubernetes.io/part-of: originate
+spec:
+  selector:
+    app.kubernetes.io/name: customer-service
+  ports:
+    - name: http
+      port: 8081
+      targetPort: http
+

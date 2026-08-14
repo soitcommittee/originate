@@ -20,7 +20,7 @@ spec:
         - name: ghcr-pull-secret
       containers:
         - name: loan-service
-          image: ghcr.io/chiewhui1113/originate-loan-service:sha-1a34573f3894b261a094671df4c9616a2891cc92
+          image: ghcr.io/chiewhui1113/originate-loan-service:sha-8c008dda392959aa5bd6f17698bf2292b6de6115
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -80,4 +80,3 @@ spec:
     - name: http
       port: 8082
       targetPort: http
-

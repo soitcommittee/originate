@@ -202,3 +202,7 @@ ghcr.io/chiewhui1113/originate-frontend
 ```
 
 Each image receives an immutable `sha-<full-commit-sha>` tag and the current `latest` tag. Kubernetes deployments should use an immutable SHA tag.
+
+## Operations
+
+See the [operations cookbook](docs/OPERATIONS-COOKBOOK.md) for the complete GitOps demonstration, incident reproduction, raw log capture, recovery, and teammate-access workflow.

@@ -188,6 +188,17 @@ The response contains the request ID needed to locate the complete transaction a
 ## Planned deployment components
 
 - Kubernetes workload and service manifests
-- GitHub Actions build and image-publishing pipeline
 - Argo CD application definitions
 - Full pod-log retrieval and forwarding integration
+
+## Container publishing
+
+Every push to `main` runs the container publishing workflow. It tests and builds all three components for both `linux/amd64` and `linux/arm64`, then publishes the images to GitHub Container Registry:
+
+```text
+ghcr.io/chiewhui1113/originate-customer-service
+ghcr.io/chiewhui1113/originate-loan-service
+ghcr.io/chiewhui1113/originate-frontend
+```
+
+Each image receives an immutable `sha-<full-commit-sha>` tag and the current `latest` tag. Kubernetes deployments should use an immutable SHA tag.

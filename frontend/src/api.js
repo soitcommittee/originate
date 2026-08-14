@@ -1,5 +1,5 @@
-const CUSTOMER_API = import.meta.env.VITE_CUSTOMER_API_URL || 'http://localhost:8081/api/customers'
-const LOAN_API = import.meta.env.VITE_LOAN_API_URL || 'http://localhost:8082/api/loan-applications'
+const CUSTOMER_API = import.meta.env.VITE_CUSTOMER_API_URL || '/api/customers'
+const LOAN_API = import.meta.env.VITE_LOAN_API_URL || '/api/loan-applications'
 
 async function request(url, options = {}) {
   const requestId = crypto.randomUUID()
@@ -34,4 +34,3 @@ export const api = {
   acceptLoan: (id) => request(`${LOAN_API}/${id}/accept`, { method: 'POST' }),
   disburseLoan: (id) => request(`${LOAN_API}/${id}/disburse`, { method: 'POST' }),
 }
-

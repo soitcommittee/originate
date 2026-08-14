@@ -119,6 +119,30 @@ npm run dev
 
 Open <http://localhost:5173> and create a loan application. The application can then be scored, approved or rejected, accepted, and disbursed from the workspace.
 
+## Run with Docker Compose
+
+Build and start the complete platform:
+
+```bash
+docker compose up --build
+```
+
+The operations portal will be available at <http://localhost:3000>. Nginx serves the React application and proxies API traffic to the two services over Docker's internal network. The backend ports are not published to the host.
+
+For a different browser-facing hostname, set `CORS_ALLOWED_ORIGIN` to the full frontend origin before starting the stack.
+
+To start the stack with the controlled resilience scenario enabled:
+
+```bash
+DEMO_ERROR_ENABLED=true docker compose up --build
+```
+
+Stop the platform with:
+
+```bash
+docker compose down
+```
+
 ## Observability
 
 Every incoming API request receives an `X-Request-ID`. The identifier is returned to the caller, propagated between services, and included in every related log line.
@@ -163,7 +187,6 @@ The response contains the request ID needed to locate the complete transaction a
 
 ## Planned deployment components
 
-- Container images for each service
 - Kubernetes workload and service manifests
 - GitHub Actions build and image-publishing pipeline
 - Argo CD application definitions

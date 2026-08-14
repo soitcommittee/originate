@@ -1,0 +1,39 @@
+name: originate
+
+services:
+  customer-service:
+    build:
+      context: ./backend/customer-service
+    image: originate/customer-service:local
+    environment:
+      SERVER_PORT: 8081
+      APP_CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:3000}
+    expose:
+      - "8081"
+    restart: unless-stopped
+
+  loan-service:
+    build:
+      context: ./backend/loan-service
+    image: originate/loan-service:local
+    environment:
+      SERVER_PORT: 8082
+      CUSTOMER_SERVICE_URL: http://customer-service:8081
+      DEMO_ERROR_ENABLED: ${DEMO_ERROR_ENABLED:-false}
+      APP_CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:3000}
+    expose:
+      - "8082"
+    depends_on:
+      - customer-service
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    image: originate/frontend:local
+    ports:
+      - "3000:80"
+    depends_on:
+      - customer-service
+      - loan-service
+    restart: unless-stopped

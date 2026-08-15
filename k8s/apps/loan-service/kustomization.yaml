@@ -4,17 +4,16 @@ kind: Kustomization
 namespace: originate
 
 resources:
-  - customer-service.yaml
-  - loan-service.yaml
-  - frontend.yaml
+  - deployment.yaml
 
 configMapGenerator:
-  - name: originate-config
+  - name: loan-service-config
     literals:
       - CUSTOMER_SERVICE_URL=http://customer-service:8081
-      - CORS_ALLOWED_ORIGIN=http://localhost:3000
+      - CORS_ALLOWED_ORIGIN=http://34.142.232.167:30080
       - DEMO_ERROR_ENABLED=false
 
 generatorOptions:
   labels:
+    app.kubernetes.io/name: loan-service
     app.kubernetes.io/part-of: originate

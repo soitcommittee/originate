@@ -1,0 +1,4 @@
+interface:
+  display_name: "Originate Architecture"
+  short_description: "Maintain Originate services and GitOps architecture"
+  default_prompt: "Use $originate-architecture to add or change an Originate microservice safely."

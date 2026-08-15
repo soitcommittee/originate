@@ -1,8 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: originate
+  name: customer-service
   namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: originate
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -10,7 +12,7 @@ spec:
   source:
     repoURL: https://github.com/chiewhui1113/originate.git
     targetRevision: main
-    path: k8s/base
+    path: k8s/apps/customer-service
   destination:
     server: https://kubernetes.default.svc
     namespace: originate

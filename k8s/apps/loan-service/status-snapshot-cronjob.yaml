@@ -1,0 +1,72 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: application-status-snapshot
+  labels:
+    app.kubernetes.io/name: application-status-snapshot
+    app.kubernetes.io/component: batch
+    app.kubernetes.io/part-of: originate
+spec:
+  schedule: "*/5 * * * *"
+  timeZone: Asia/Kuala_Lumpur
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 24
+  failedJobsHistoryLimit: 6
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: application-status-snapshot
+            app.kubernetes.io/component: batch
+            app.kubernetes.io/part-of: originate
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: status-snapshot
+              image: curlimages/curl:8.12.1
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              command:
+                - /bin/sh
+                - -ec
+              args:
+                - |
+                  run_id="status-snapshot-$(date +%s)-${HOSTNAME}"
+                  attempt=1
+                  for delay in 0 30 60 120; do
+                    if [ "$delay" -gt 0 ]; then
+                      echo "application_status_snapshot_retry runId=${run_id} attempt=${attempt} delaySeconds=${delay}"
+                      sleep "$delay"
+                    fi
+                    if response=$(curl --fail-with-body --silent --show-error --max-time 15 \
+                      --request POST \
+                      --header "X-Request-ID: ${run_id}" \
+                      http://loan-service:8082/internal/jobs/application-status-snapshot); then
+                      echo "application_status_snapshot_completed runId=${run_id} attempt=${attempt} response=${response}"
+                      exit 0
+                    fi
+                    echo "application_status_snapshot_attempt_failed runId=${run_id} attempt=${attempt}" >&2
+                    attempt=$((attempt + 1))
+                  done
+                  echo "application_status_snapshot_exhausted runId=${run_id} attempts=4" >&2
+                  exit 1
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi

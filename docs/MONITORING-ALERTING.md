@@ -3,11 +3,11 @@
 ## Flow
 
 ```text
-Spring Boot metrics / frontend health
+Spring Boot HTTP metrics
               |
           Prometheus
               |
-        alert rules (5xx / down)
+       alert rule (HTTP 5xx)
               |
          Alertmanager
               |
@@ -16,7 +16,7 @@ Spring Boot metrics / frontend health
       service-specific Lark group
 ```
 
-Prometheus raises `Excessive5xxErrors` when one backend service returns at least three HTTP 5xx responses in five minutes. Availability alerts require two continuous minutes of failure. Alertmanager groups, deduplicates and retries delivery; resolved notifications are sent too.
+Prometheus raises `Excessive5xxErrors` when one backend service returns at least three HTTP 5xx responses in five minutes. Service availability is still collected for inspection, but it does not send Lark alerts during normal rolling deployments. Alertmanager groups, deduplicates and retries delivery; resolved notifications are sent when the 5xx error rate recovers.
 
 ## 1. Create the Lark bots
 

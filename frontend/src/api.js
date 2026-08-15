@@ -1,8 +1,26 @@
 const CUSTOMER_API = import.meta.env.VITE_CUSTOMER_API_URL || '/api/customers'
 const LOAN_API = import.meta.env.VITE_LOAN_API_URL || '/api/loan-applications'
 
+function createRequestId() {
+  const cryptoApi = globalThis.crypto
+
+  if (typeof cryptoApi?.randomUUID === 'function') {
+    return cryptoApi.randomUUID()
+  }
+
+  if (typeof cryptoApi?.getRandomValues === 'function') {
+    const bytes = cryptoApi.getRandomValues(new Uint8Array(16))
+    bytes[6] = (bytes[6] & 0x0f) | 0x40
+    bytes[8] = (bytes[8] & 0x3f) | 0x80
+    const value = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+    return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`
+  }
+
+  return `web-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
+}
+
 async function request(url, options = {}) {
-  const requestId = crypto.randomUUID()
+  const requestId = createRequestId()
   const response = await fetch(url, {
     ...options,
     headers: {

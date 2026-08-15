@@ -1,0 +1,81 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: hackathon
+    platform: originate
+
+rule_files:
+  - /etc/prometheus/rules/alert-rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager.monitoring.svc.cluster.local:9093
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090
+
+  - job_name: customer-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - customer-service.originate.svc.cluster.local:8081
+        labels:
+          service: customer-service
+
+  - job_name: loan-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - loan-service.originate.svc.cluster.local:8082
+        labels:
+          service: loan-service
+
+  - job_name: product-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - product-service.originate.svc.cluster.local:8083
+        labels:
+          service: product-service
+
+  - job_name: decision-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - decision-service.originate.svc.cluster.local:8084
+        labels:
+          service: decision-service
+
+  - job_name: notification-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - notification-service.originate.svc.cluster.local:8085
+        labels:
+          service: notification-service
+
+  - job_name: frontend
+    metrics_path: /probe
+    params:
+      module:
+        - http_2xx
+    static_configs:
+      - targets:
+          - http://frontend.originate.svc.cluster.local/healthz
+        labels:
+          service: frontend
+    relabel_configs:
+      - source_labels:
+          - __address__
+        target_label: __param_target
+      - source_labels:
+          - __param_target
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter.monitoring.svc.cluster.local:9115

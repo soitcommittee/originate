@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  labels:
+    app.kubernetes.io/name: notification-service
+    app.kubernetes.io/part-of: originate
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: notification-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: notification-service
+        app.kubernetes.io/part-of: originate
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: notification-service
+          image: ghcr.io/chiewhui1113/originate-notification-service:latest
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 8085
+          env:
+            - name: SERVER_PORT
+              value: "8085"
+            - name: LARK_WEBHOOK_CUSTOMER_SERVICE
+              valueFrom:
+                secretKeyRef:
+                  name: lark-webhook-secrets
+                  key: customer-service
+                  optional: true
+            - name: LARK_WEBHOOK_LOAN_SERVICE
+              valueFrom:
+                secretKeyRef:
+                  name: lark-webhook-secrets
+                  key: loan-service
+                  optional: true
+            - name: LARK_WEBHOOK_PRODUCT_SERVICE
+              valueFrom:
+                secretKeyRef:
+                  name: lark-webhook-secrets
+                  key: product-service
+                  optional: true
+            - name: LARK_WEBHOOK_DECISION_SERVICE
+              valueFrom:
+                secretKeyRef:
+                  name: lark-webhook-secrets
+                  key: decision-service
+                  optional: true
+            - name: LARK_WEBHOOK_NOTIFICATION_SERVICE
+              valueFrom:
+                secretKeyRef:
+                  name: lark-webhook-secrets
+                  key: notification-service
+                  optional: true
+            - name: LARK_WEBHOOK_FRONTEND
+              valueFrom:
+                secretKeyRef:
+                  name: lark-webhook-secrets
+                  key: frontend
+                  optional: true
+            - name: LARK_WEBHOOK_PLATFORM
+              valueFrom:
+                secretKeyRef:
+                  name: lark-webhook-secrets
+                  key: platform
+                  optional: true
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 2
+            failureThreshold: 4
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 3
+            failureThreshold: 2
+          resources:
+            requests:
+              cpu: 75m
+              memory: 192Mi
+            limits:
+              cpu: 400m
+              memory: 384Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  labels:
+    app.kubernetes.io/name: notification-service
+    app.kubernetes.io/part-of: originate
+spec:
+  selector:
+    app.kubernetes.io/name: notification-service
+  ports:
+    - name: http
+      port: 8085
+      targetPort: http

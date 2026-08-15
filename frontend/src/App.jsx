@@ -88,7 +88,7 @@ function App() {
         </nav>
         <div className="environment-card">
           <span className="pulse" />
-          <div><strong>Originate platform</strong><small>5 services expected</small></div>
+          <div><strong>Originate platform</strong><small>6 services expected</small></div>
         </div>
       </aside>
 

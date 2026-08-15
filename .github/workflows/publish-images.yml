@@ -32,6 +32,7 @@ jobs:
           - loan-service
           - product-service
           - decision-service
+          - notification-service
 
     steps:
       - name: Check out repository
@@ -98,6 +99,8 @@ jobs:
             context: ./backend/product-service
           - component: decision-service
             context: ./backend/decision-service
+          - component: notification-service
+            context: ./backend/notification-service
           - component: frontend
             context: ./frontend
 
@@ -134,3 +137,41 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.component }}
           cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+
+  deploy-manifests:
+    name: Pin deployment images
+    needs:
+      - publish
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - name: Check out main branch
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Pin every published image to the source commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          for component in customer-service loan-service product-service decision-service notification-service frontend; do
+            manifest="k8s/apps/${component}/deployment.yaml"
+            sed -i -E "s|(image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/originate-${component}:).*|\\1sha-${GITHUB_SHA}|" "${manifest}"
+          done
+
+      - name: Commit GitOps deployment revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- k8s/apps; then
+            echo "Deployment manifests already reference ${GITHUB_SHA}."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add k8s/apps/*/deployment.yaml
+          git commit -m "Deploy images from ${GITHUB_SHA::7} [skip ci]"
+          git push origin main

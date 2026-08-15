@@ -14,7 +14,7 @@ configMapGenerator:
       - PRODUCT_SERVICE_URL=http://product-service:8083
       - DECISION_SERVICE_URL=http://decision-service:8084
       - CORS_ALLOWED_ORIGIN=http://34.142.232.167:30080
-      - DEMO_ERROR_ENABLED=false
+      - DEMO_ERROR_ENABLED=true
 
 generatorOptions:
   labels:

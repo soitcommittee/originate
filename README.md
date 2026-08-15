@@ -10,6 +10,7 @@ Originate is a Spring Boot and React loan-origination demo with GitHub container
 | `loan-service` | Application, approval, acceptance and disbursement workflow | 8082 |
 | `product-service` | Loan product limits, base rates and tenures | 8083 |
 | `decision-service` | Affordability scoring and credit recommendations | 8084 |
+| `notification-service` | Alertmanager webhook and per-service Lark routing | 8085 |
 | `frontend` | Loan operations portal and API reverse proxy | 80 |
 
 ## Run locally
@@ -52,6 +53,8 @@ kubectl apply -f argocd/bootstrap/root-application.yaml
 The root application discovers the child definitions in `argocd/apps/`. Each child syncs only its matching `k8s/apps/<service>` directory.
 
 For incident reproduction, log capture and recovery commands, see [docs/OPERATIONS-COOKBOOK.md](docs/OPERATIONS-COOKBOOK.md).
+
+Prometheus monitors backend HTTP errors and service health, Alertmanager groups repeated incidents, and `notification-service` sends each service's alert to its own Lark group. Setup and test commands are in [docs/MONITORING-ALERTING.md](docs/MONITORING-ALERTING.md).
 
 GitHub Actions runs every backend test plus the JaCoCo service-layer coverage gate before publishing images. The Loan Service deployment also includes a five-minute application-status snapshot CronJob; its operation and manual trigger commands are in the cookbook.
 

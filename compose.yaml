@@ -51,6 +51,23 @@ services:
       - decision-service
     restart: unless-stopped
 
+  notification-service:
+    build:
+      context: ./backend/notification-service
+    image: originate/notification-service:local
+    environment:
+      SERVER_PORT: 8085
+      LARK_WEBHOOK_CUSTOMER_SERVICE: ${LARK_WEBHOOK_CUSTOMER_SERVICE:-}
+      LARK_WEBHOOK_LOAN_SERVICE: ${LARK_WEBHOOK_LOAN_SERVICE:-}
+      LARK_WEBHOOK_PRODUCT_SERVICE: ${LARK_WEBHOOK_PRODUCT_SERVICE:-}
+      LARK_WEBHOOK_DECISION_SERVICE: ${LARK_WEBHOOK_DECISION_SERVICE:-}
+      LARK_WEBHOOK_FRONTEND: ${LARK_WEBHOOK_FRONTEND:-}
+      LARK_WEBHOOK_NOTIFICATION_SERVICE: ${LARK_WEBHOOK_NOTIFICATION_SERVICE:-}
+      LARK_WEBHOOK_PLATFORM: ${LARK_WEBHOOK_PLATFORM:-}
+    expose:
+      - "8085"
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend

@@ -10,7 +10,7 @@ spec:
   schedule: "*/5 * * * *"
   timeZone: Asia/Kuala_Lumpur
   concurrencyPolicy: Forbid
-  successfulJobsHistoryLimit: 24
+  successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 6
   jobTemplate:
     spec:

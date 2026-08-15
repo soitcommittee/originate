@@ -20,7 +20,7 @@ spec:
         - name: ghcr-pull-secret
       containers:
         - name: decision-service
-          image: ghcr.io/chiewhui1113/originate-decision-service:sha-8bad66561e9a6ff5343e349b790c77b47dc6c588
+          image: ghcr.io/chiewhui1113/originate-decision-service:sha-98bf2c4509064088951eabe870bb9723240313e3
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

@@ -5,7 +5,9 @@
 ```text
 React frontend
   |-- /api/customers --------> customer-service
+  |                              `-> PostgreSQL customer_service schema
   `-- /api/loan-applications -> loan-service
+                                  |-> PostgreSQL loan_service schema
                                   |-> customer-service
                                   |-> product-service
                                   `-> decision-service
@@ -16,7 +18,7 @@ Kubernetes CronJob (every 5 minutes)
               `-> status snapshot in Job and service logs
 ```
 
-`customer-service` owns borrower and affordability data. `product-service` owns loan limits, tenures and base rates. `decision-service` owns the affordability score and credit recommendation. `loan-service` orchestrates the compact origination workflow and stores the resulting application state. The frontend is an operations UI and Nginx reverse proxy; it does not own business rules. Batch containers call an internal service contract instead of connecting to another service's database.
+`customer-service` owns borrower and affordability data. `product-service` owns loan limits, tenures and base rates. `decision-service` owns the affordability score and credit recommendation. `loan-service` orchestrates the compact origination workflow and stores the resulting application state. Customer and loan records use separate schemas in the persistent PostgreSQL instance. The frontend is an operations UI and Nginx reverse proxy; it does not own business rules. Batch containers call an internal service contract instead of connecting to another service's database.
 
 `notification-service` is infrastructure-facing: Alertmanager calls its internal webhook API, then it routes a masked alert message to the Lark webhook configured for the affected service. Prometheus, Alertmanager and Blackbox Exporter run in the `monitoring` namespace; their UIs and the notification API remain internal ClusterIP services.
 

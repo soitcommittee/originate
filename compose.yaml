@@ -1,6 +1,22 @@
 name: originate
 
 services:
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: originate
+      POSTGRES_USER: originate
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-originate-local}
+    volumes:
+      - originate-postgres-data:/var/lib/postgresql/data
+      - ./k8s/apps/database/init-schemas.sql:/docker-entrypoint-initdb.d/01-init-schemas.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U originate -d originate"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
   customer-service:
     build:
       context: ./backend/customer-service
@@ -8,8 +24,15 @@ services:
     environment:
       SERVER_PORT: 8081
       APP_CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:3000}
+      DB_URL: jdbc:postgresql://database:5432/originate?currentSchema=customer_service
+      DB_USERNAME: originate
+      DB_PASSWORD: ${DB_PASSWORD:-originate-local}
+      H2_CONSOLE_ENABLED: "false"
     expose:
       - "8081"
+    depends_on:
+      database:
+        condition: service_healthy
     restart: unless-stopped
 
   product-service:
@@ -43,12 +66,21 @@ services:
       DECISION_SERVICE_URL: http://decision-service:8084
       DEMO_ERROR_ENABLED: ${DEMO_ERROR_ENABLED:-false}
       APP_CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:3000}
+      DB_URL: jdbc:postgresql://database:5432/originate?currentSchema=loan_service
+      DB_USERNAME: originate
+      DB_PASSWORD: ${DB_PASSWORD:-originate-local}
+      H2_CONSOLE_ENABLED: "false"
     expose:
       - "8082"
     depends_on:
-      - customer-service
-      - product-service
-      - decision-service
+      database:
+        condition: service_healthy
+      customer-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      decision-service:
+        condition: service_started
     restart: unless-stopped
 
   notification-service:
@@ -78,3 +110,6 @@ services:
       - customer-service
       - loan-service
     restart: unless-stopped
+
+volumes:
+  originate-postgres-data:

@@ -25,6 +25,7 @@ Render every service independently:
 
 ```bash
 kubectl kustomize k8s/apps/customer-service >/dev/null
+kubectl kustomize k8s/apps/database >/dev/null
 kubectl kustomize k8s/apps/loan-service >/dev/null
 kubectl kustomize k8s/apps/frontend >/dev/null
 ```
@@ -49,4 +50,4 @@ Delete the old `originate` Application without cascading its workloads, then app
 
 ## Secrets
 
-The private repository credential stays in Argo CD. The `ghcr-pull-secret` stays in namespace `originate`. Never store either token in Git. A child Application can reference the pull secret but must not own or prune it.
+The private repository credential stays in Argo CD. The `ghcr-pull-secret` and `originate-database-credentials` stay in namespace `originate`. Never store tokens or passwords in Git. A child Application can reference a secret but must not own or prune it.

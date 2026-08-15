@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: originate
+
+resources:
+  - statefulset.yaml
+
+configMapGenerator:
+  - name: originate-postgres-bootstrap
+    files:
+      - init-schemas.sql
+
+generatorOptions:
+  labels:
+    app.kubernetes.io/name: originate-postgres
+    app.kubernetes.io/part-of: originate

@@ -42,6 +42,7 @@ async function request(url, options = {}) {
 
 export const api = {
   getCustomers: () => request(CUSTOMER_API),
+  createCustomer: (customer) => request(CUSTOMER_API, { method: 'POST', body: JSON.stringify(customer) }),
   getLoans: () => request(LOAN_API),
   createLoan: (loan) => request(LOAN_API, { method: 'POST', body: JSON.stringify(loan) }),
   scoreLoan: (id) => request(`${LOAN_API}/${id}/score`, { method: 'POST' }),

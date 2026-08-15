@@ -28,6 +28,20 @@ spec:
           env:
             - name: SERVER_PORT
               value: "8082"
+            - name: DB_URL
+              value: jdbc:postgresql://originate-postgres:5432/originate?currentSchema=loan_service
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: originate-database-credentials
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: originate-database-credentials
+                  key: password
+            - name: H2_CONSOLE_ENABLED
+              value: "false"
             - name: CUSTOMER_SERVICE_URL
               valueFrom:
                 configMapKeyRef:

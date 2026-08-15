@@ -1,0 +1,2 @@
+CREATE SCHEMA IF NOT EXISTS customer_service AUTHORIZATION originate;
+CREATE SCHEMA IF NOT EXISTS loan_service AUTHORIZATION originate;

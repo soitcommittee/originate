@@ -88,7 +88,7 @@ function App() {
         </nav>
         <div className="environment-card">
           <span className="pulse" />
-          <div><strong>Local environment</strong><small>2 services expected</small></div>
+          <div><strong>Originate platform</strong><small>5 services expected</small></div>
         </div>
       </aside>
 
@@ -179,4 +179,3 @@ function App() {
 }
 
 export default App
-

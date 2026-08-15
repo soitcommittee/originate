@@ -7,7 +7,7 @@ RUN chmod +x gradlew
 RUN ./gradlew dependencies --no-daemon
 
 COPY src src
-RUN ./gradlew clean test bootJar --no-daemon
+RUN ./gradlew clean check bootJar --no-daemon
 
 FROM eclipse-temurin:17-jre-jammy
 

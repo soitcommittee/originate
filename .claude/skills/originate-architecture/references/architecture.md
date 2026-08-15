@@ -6,10 +6,17 @@
 React frontend
   |-- /api/customers --------> customer-service
   `-- /api/loan-applications -> loan-service
-                                  `-> customer-service
+                                  |-> customer-service
+                                  |-> product-service
+                                  `-> decision-service
+
+Kubernetes CronJob (every 5 minutes)
+  `-- POST /internal/jobs/application-status-snapshot
+        `-> loan-service -> loan database
+              `-> status snapshot in Job and service logs
 ```
 
-`customer-service` owns borrower and affordability data. `loan-service` currently owns the compact origination workflow: submission, scoring, underwriting decision, acceptance and disbursement. The frontend is an operations UI and Nginx reverse proxy; it does not own business rules.
+`customer-service` owns borrower and affordability data. `product-service` owns loan limits, tenures and base rates. `decision-service` owns the affordability score and credit recommendation. `loan-service` orchestrates the compact origination workflow and stores the resulting application state. The frontend is an operations UI and Nginx reverse proxy; it does not own business rules. Batch containers call an internal service contract instead of connecting to another service's database.
 
 ## Target service map
 
@@ -50,8 +57,8 @@ Avoid shared databases. Integrate through versioned HTTP contracts initially. In
 
 Extract from the current `loan-service` incrementally:
 
-1. Product rules into `product-service`.
-2. Scoring and underwriting into `decision-service`.
+1. Product rules into `product-service`. **Implemented.**
+2. Scoring and underwriting recommendation into `decision-service`. **Implemented.**
 3. Post-disbursement truth into `loan-account-service` and `schedule-service`.
 4. Repayment, ledger and reconciliation.
 5. Delinquency, restructure and collection.

@@ -7,7 +7,9 @@ Originate is a Spring Boot and React loan-origination demo with GitHub container
 | Component | Responsibility | Port |
 |---|---|---:|
 | `customer-service` | Borrower profiles and affordability data | 8081 |
-| `loan-service` | Application, scoring, approval and disbursement workflow | 8082 |
+| `loan-service` | Application, approval, acceptance and disbursement workflow | 8082 |
+| `product-service` | Loan product limits, base rates and tenures | 8083 |
+| `decision-service` | Affordability scoring and credit recommendations | 8084 |
 | `frontend` | Loan operations portal and API reverse proxy | 80 |
 
 ## Run locally
@@ -50,5 +52,7 @@ kubectl apply -f argocd/bootstrap/root-application.yaml
 The root application discovers the child definitions in `argocd/apps/`. Each child syncs only its matching `k8s/apps/<service>` directory.
 
 For incident reproduction, log capture and recovery commands, see [docs/OPERATIONS-COOKBOOK.md](docs/OPERATIONS-COOKBOOK.md).
+
+GitHub Actions runs every backend test plus the JaCoCo service-layer coverage gate before publishing images. The Loan Service deployment also includes a five-minute application-status snapshot CronJob; its operation and manual trigger commands are in the cookbook.
 
 For architecture rules and instructions for adding a service, use `.claude/skills/originate-architecture/SKILL.md`.

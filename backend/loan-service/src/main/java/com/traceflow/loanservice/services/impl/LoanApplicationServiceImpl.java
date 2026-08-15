@@ -2,7 +2,12 @@ package com.traceflow.loanservice.services.impl;
 
 import com.traceflow.loanservice.client.CustomerFeignClient;
 import com.traceflow.loanservice.client.CustomerResponse;
+import com.traceflow.loanservice.client.DecisionEvaluationRequest;
+import com.traceflow.loanservice.client.DecisionEvaluationResponse;
+import com.traceflow.loanservice.client.DecisionFeignClient;
 import com.traceflow.loanservice.client.DisbursementGatewayClient;
+import com.traceflow.loanservice.client.ProductFeignClient;
+import com.traceflow.loanservice.client.ProductResponse;
 import com.traceflow.loanservice.domain.LoanApplication;
 import com.traceflow.loanservice.domain.LoanStatus;
 import com.traceflow.loanservice.dto.requests.CreateLoanApplicationRequest;
@@ -20,23 +25,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 
 @Service
 public class LoanApplicationServiceImpl implements LoanApplicationService {
     private static final Logger log = LoggerFactory.getLogger(LoanApplicationServiceImpl.class);
+    private static final String DEFAULT_PRODUCT_CODE = "PERSONAL_LOAN";
 
     private final LoanApplicationRepository repository;
     private final CustomerFeignClient customerClient;
+    private final ProductFeignClient productClient;
+    private final DecisionFeignClient decisionClient;
     private final DisbursementGatewayClient disbursementGatewayClient;
 
     public LoanApplicationServiceImpl(LoanApplicationRepository repository,
                                       CustomerFeignClient customerClient,
+                                      ProductFeignClient productClient,
+                                      DecisionFeignClient decisionClient,
                                       DisbursementGatewayClient disbursementGatewayClient) {
         this.repository = repository;
         this.customerClient = customerClient;
+        this.productClient = productClient;
+        this.decisionClient = decisionClient;
         this.disbursementGatewayClient = disbursementGatewayClient;
     }
 
@@ -69,17 +79,13 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
         LoanApplication loan = find(id);
         requireStatus(loan, LoanStatus.SUBMITTED);
         CustomerResponse customer = fetchCustomer(loan.getCustomerId());
+        ProductResponse product = fetchProduct(DEFAULT_PRODUCT_CODE);
+        DecisionEvaluationResponse decision = evaluateDecision(loan, customer, product);
 
-        BigDecimal annualIncome = customer.monthlyIncome().multiply(BigDecimal.valueOf(12));
-        BigDecimal ratio = loan.getRequestedAmount().divide(annualIncome, 4, RoundingMode.HALF_UP);
-        int score = ratio.compareTo(new BigDecimal("0.50")) <= 0 ? 760
-                : ratio.compareTo(new BigDecimal("1.00")) <= 0 ? 690 : 610;
-        BigDecimal interestRate = score >= 720 ? new BigDecimal("4.25")
-                : score >= 650 ? new BigDecimal("6.75") : new BigDecimal("9.50");
-
-        loan.scored(score, interestRate);
-        log.info("loan_scored loanApplicationId={} customerId={} creditScore={} interestRate={}",
-                loan.getId(), loan.getCustomerId(), score, interestRate);
+        loan.scored(decision.creditScore(), decision.interestRate());
+        log.info("loan_scored loanApplicationId={} customerId={} productCode={} creditScore={} interestRate={} recommendation={} reason={}",
+                loan.getId(), loan.getCustomerId(), decision.productCode(), decision.creditScore(),
+                decision.interestRate(), decision.recommendation(), decision.reason());
         return toResponse(loan);
     }
 
@@ -136,6 +142,29 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
         }
     }
 
+    private ProductResponse fetchProduct(String productCode) {
+        try {
+            return productClient.getByCode(productCode, MDC.get("requestId"));
+        } catch (FeignException ex) {
+            throw new AppException(ErrorCode.PRODUCT_SERVICE_UNAVAILABLE,
+                    "Unable to load product policy for " + productCode, HttpStatus.BAD_GATEWAY, ex);
+        }
+    }
+
+    private DecisionEvaluationResponse evaluateDecision(LoanApplication loan, CustomerResponse customer,
+                                                          ProductResponse product) {
+        DecisionEvaluationRequest request = new DecisionEvaluationRequest(
+                customer.id(), customer.monthlyIncome(), loan.getRequestedAmount(), loan.getTenureMonths(),
+                product.code(), product.minAmount(), product.maxAmount(), product.minTenureMonths(),
+                product.maxTenureMonths(), product.baseInterestRate());
+        try {
+            return decisionClient.evaluate(request, MDC.get("requestId"));
+        } catch (FeignException ex) {
+            throw new AppException(ErrorCode.DECISION_SERVICE_UNAVAILABLE,
+                    "Unable to evaluate loan application " + loan.getId(), HttpStatus.BAD_GATEWAY, ex);
+        }
+    }
+
     private LoanApplication find(Long id) {
         return repository.findById(id).orElseThrow(() -> new AppException(
                 ErrorCode.LOAN_APPLICATION_NOT_FOUND, "Loan application " + id + " was not found", HttpStatus.NOT_FOUND));
@@ -156,4 +185,3 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
                 loan.getUpdatedAt(), loan.getDisbursedAt());
     }
 }
-

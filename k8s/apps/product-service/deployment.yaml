@@ -20,7 +20,7 @@ spec:
         - name: ghcr-pull-secret
       containers:
         - name: product-service
-          image: ghcr.io/chiewhui1113/originate-product-service:sha-836fc774dfe06fe61f934909f3dc86396e38aa1c
+          image: ghcr.io/chiewhui1113/originate-product-service:sha-8bad66561e9a6ff5343e349b790c77b47dc6c588
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

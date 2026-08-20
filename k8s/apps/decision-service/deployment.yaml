@@ -28,6 +28,11 @@ spec:
           env:
             - name: SERVER_PORT
               value: "8084"
+            - name: DEMO_DECISION_ERROR_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: decision-service-config
+                  key: DEMO_DECISION_ERROR_ENABLED
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

@@ -8,13 +8,12 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DecisionServiceImplTests {
-    private final DecisionServiceImpl service = new DecisionServiceImpl(new InMemoryCreditPolicyRepository());
-
     @Test
     void returnsEligibleRecommendationForAffordableApplication() {
-        var response = service.evaluate(request(new BigDecimal("50000.00"), 60));
+        var response = service(false).evaluate(request(new BigDecimal("50000.00"), 60));
 
         assertThat(response.creditScore()).isEqualTo(760);
         assertThat(response.interestRate()).isEqualByComparingTo("4.25");
@@ -23,10 +22,21 @@ class DecisionServiceImplTests {
 
     @Test
     void declinesApplicationOutsideProductAmountLimit() {
-        var response = service.evaluate(request(new BigDecimal("300000.00"), 60));
+        var response = service(false).evaluate(request(new BigDecimal("300000.00"), 60));
 
         assertThat(response.recommendation()).isEqualTo(DecisionRecommendation.DECLINE);
         assertThat(response.reason()).contains("amount");
+    }
+
+    @Test
+    void simulatesDecisionServiceFailureWhenEnabled() {
+        assertThatThrownBy(() -> service(true).evaluate(request(new BigDecimal("50000.00"), 60)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Simulated decision service outage");
+    }
+
+    private DecisionServiceImpl service(boolean demoDecisionErrorEnabled) {
+        return new DecisionServiceImpl(new InMemoryCreditPolicyRepository(), demoDecisionErrorEnabled);
     }
 
     private DecisionEvaluationRequest request(BigDecimal amount, int tenureMonths) {

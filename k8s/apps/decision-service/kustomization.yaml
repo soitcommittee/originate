@@ -5,3 +5,13 @@ namespace: originate
 
 resources:
   - deployment.yaml
+
+configMapGenerator:
+  - name: decision-service-config
+    literals:
+      - DEMO_DECISION_ERROR_ENABLED=true
+
+generatorOptions:
+  labels:
+    app.kubernetes.io/name: decision-service
+    app.kubernetes.io/part-of: originate

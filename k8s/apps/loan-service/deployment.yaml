@@ -67,6 +67,11 @@ spec:
                 configMapKeyRef:
                   name: loan-service-config
                   key: DEMO_ERROR_ENABLED
+            - name: DEMO_BIGDECIMAL_ERROR_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: loan-service-config
+                  key: DEMO_BIGDECIMAL_ERROR_ENABLED
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

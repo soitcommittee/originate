@@ -16,16 +16,22 @@ class DisbursementGatewayClientTests {
 
     @Test
     void transferSucceedsWhenDemoFailureIsDisabled() {
-        DisbursementGatewayClient client = new DisbursementGatewayClient(false, 3000);
+        DisbursementGatewayClient client = new DisbursementGatewayClient(false, 3000, false);
         assertDoesNotThrow(() -> client.transferFunds(loan));
     }
 
     @Test
     void transferPreservesNestedTimeoutCauseWhenDemoFailureIsEnabled() {
-        DisbursementGatewayClient client = new DisbursementGatewayClient(true, 3000);
+        DisbursementGatewayClient client = new DisbursementGatewayClient(true, 3000, false);
         PaymentGatewayTimeoutException error = assertThrows(
                 PaymentGatewayTimeoutException.class, () -> client.transferFunds(loan));
         assertInstanceOf(java.net.SocketTimeoutException.class, error.getCause());
     }
-}
 
+    @Test
+    void transferFailsWithBigDecimalConversionErrorWhenDemoFlagIsEnabled() {
+        DisbursementGatewayClient client = new DisbursementGatewayClient(false, 3000, true);
+
+        assertThrows(ArithmeticException.class, () -> client.transferFunds(loan));
+    }
+}

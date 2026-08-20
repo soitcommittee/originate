@@ -65,6 +65,7 @@ services:
       PRODUCT_SERVICE_URL: http://product-service:8083
       DECISION_SERVICE_URL: http://decision-service:8084
       DEMO_ERROR_ENABLED: ${DEMO_ERROR_ENABLED:-false}
+      DEMO_BIGDECIMAL_ERROR_ENABLED: ${DEMO_BIGDECIMAL_ERROR_ENABLED:-false}
       APP_CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:3000}
       DB_URL: jdbc:postgresql://database:5432/originate?currentSchema=loan_service
       DB_USERNAME: originate

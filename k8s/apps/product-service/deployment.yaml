@@ -28,6 +28,11 @@ spec:
           env:
             - name: SERVER_PORT
               value: "8083"
+            - name: DEMO_PRODUCT_ERROR_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: product-service-config
+                  key: DEMO_PRODUCT_ERROR_ENABLED
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

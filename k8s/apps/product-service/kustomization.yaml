@@ -5,3 +5,13 @@ namespace: originate
 
 resources:
   - deployment.yaml
+
+configMapGenerator:
+  - name: product-service-config
+    literals:
+      - DEMO_PRODUCT_ERROR_ENABLED=true
+
+generatorOptions:
+  labels:
+    app.kubernetes.io/name: product-service
+    app.kubernetes.io/part-of: originate

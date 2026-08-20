@@ -16,6 +16,7 @@ configMapGenerator:
       - CORS_ALLOWED_ORIGIN=http://34.142.232.167:30080
       - DEMO_ERROR_ENABLED=false
       - DEMO_BIGDECIMAL_ERROR_ENABLED=true
+      - DEMO_DECISION_ERROR_ENABLED=true
 
 generatorOptions:
   labels:

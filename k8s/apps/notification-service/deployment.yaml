@@ -91,7 +91,7 @@ spec:
                   name: haaland-api-credentials
                   key: auth-token
             - name: HAALAND_REPO_URL
-              value: "https://github.com/chiewhui1113/originate.git"
+              value: "https://github.com/soitcommittee/originate.git"
             - name: HAALAND_BASE_REF
               value: "main"
           readinessProbe:

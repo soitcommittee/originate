@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/chiewhui1113/originate.git
+    repoURL: https://github.com/soitcommittee/originate.git
     targetRevision: main
     path: k8s/apps/notification-service
   destination:

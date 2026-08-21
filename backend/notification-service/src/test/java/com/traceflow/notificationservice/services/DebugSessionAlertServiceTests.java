@@ -30,7 +30,7 @@ class DebugSessionAlertServiceTests {
         podLogClient = mock(KubernetesPodLogClient.class);
         haalandClient = mock(HaalandDebugSessionClient.class);
         service = new DebugSessionAlertService(podLogClient, new ErrorLogExtractor(), haalandClient,
-                "https://github.com/chiewhui1113/originate.git", "main");
+                "https://github.com/soitcommittee/originate.git", "main");
     }
 
     @Test

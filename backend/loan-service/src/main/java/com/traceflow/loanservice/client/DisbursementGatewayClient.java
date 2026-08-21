@@ -3,6 +3,8 @@ package com.traceflow.loanservice.client;
 import com.traceflow.loanservice.domain.LoanApplication;
 import com.traceflow.loanservice.exception.PaymentGatewayTimeoutException;
 import com.traceflow.loanservice.exception.ThirdPartyApiContractException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,18 +20,22 @@ public class DisbursementGatewayClient {
 
     private final boolean demoErrorEnabled;
     private final boolean demoBigDecimalErrorEnabled;
-    private final boolean demoThirdPartyApiUpgradeEnabled;
+    private final RestClient paymentProvider;
+    private final String paymentProviderApiPath;
     private final long simulatedTimeoutMs;
 
     public DisbursementGatewayClient(
+            RestClient.Builder restClientBuilder,
             @Value("${demo.error.enabled:false}") boolean demoErrorEnabled,
             @Value("${demo.error.simulated-timeout-ms:3000}") long simulatedTimeoutMs,
             @Value("${demo.bigdecimal.error.enabled:false}") boolean demoBigDecimalErrorEnabled,
-            @Value("${demo.third-party.api-upgrade.enabled:false}") boolean demoThirdPartyApiUpgradeEnabled) {
+            @Value("${payment.provider.url:http://localhost:8090}") String paymentProviderUrl,
+            @Value("${payment.provider.api-path:/v1/disbursements}") String paymentProviderApiPath) {
         this.demoErrorEnabled = demoErrorEnabled;
         this.simulatedTimeoutMs = simulatedTimeoutMs;
         this.demoBigDecimalErrorEnabled = demoBigDecimalErrorEnabled;
-        this.demoThirdPartyApiUpgradeEnabled = demoThirdPartyApiUpgradeEnabled;
+        this.paymentProvider = restClientBuilder.baseUrl(paymentProviderUrl).build();
+        this.paymentProviderApiPath = paymentProviderApiPath;
     }
 
     public void transferFunds(LoanApplication loan) {
@@ -46,14 +52,6 @@ public class DisbursementGatewayClient {
             amountWithCents.intValueExact();
         }
 
-        if (demoThirdPartyApiUpgradeEnabled) {
-            log.error("demo_third_party_api_contract_mismatch loanApplicationId={} providerApiVersion=v2 "
-                            + "missingRequiredField=currency sentPayloadVersion=v1",
-                    loan.getId());
-            throw new ThirdPartyApiContractException(
-                    "Third-party disbursement API v2 requires the new field 'currency'");
-        }
-
         if (demoErrorEnabled) {
             log.warn("payment_gateway_request_retry loanApplicationId={} transactionId={} attempt=2 reason=read_timeout",
                     loan.getId(), transactionId);
@@ -63,7 +61,23 @@ public class DisbursementGatewayClient {
                     "Payment gateway failed after 2 attempts for transaction " + transactionId, rootCause);
         }
 
-        log.info("payment_gateway_request_succeeded loanApplicationId={} transactionId={} providerReference=PG-{}",
-                loan.getId(), transactionId, System.currentTimeMillis());
+        try {
+            PaymentProviderDisbursementResponse response = paymentProvider.post()
+                    .uri(paymentProviderApiPath)
+                    .body(new PaymentProviderDisbursementRequest(transactionId, loan.getRequestedAmount()))
+                    .retrieve()
+                    .body(PaymentProviderDisbursementResponse.class);
+            log.info("payment_gateway_request_succeeded loanApplicationId={} transactionId={} providerReference={}",
+                    loan.getId(), transactionId, response == null ? "unknown" : response.providerReference());
+        } catch (RestClientResponseException ex) {
+            if (ex.getStatusCode().value() == 400) {
+                log.error("third_party_api_contract_mismatch loanApplicationId={} providerApiPath={} "
+                                + "legacyPayloadFields=transactionId,amount providerResponse={}",
+                        loan.getId(), paymentProviderApiPath, ex.getResponseBodyAsString(), ex);
+                throw new ThirdPartyApiContractException(
+                        "Third-party disbursement API rejected the legacy payload; its contract has changed");
+            }
+            throw ex;
+        }
     }
 }

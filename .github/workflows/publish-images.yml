@@ -101,6 +101,8 @@ jobs:
             context: ./backend/decision-service
           - component: notification-service
             context: ./backend/notification-service
+          - component: payment-provider
+            context: ./backend/payment-provider
           - component: frontend
             context: ./frontend
 
@@ -157,7 +159,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for component in customer-service loan-service product-service decision-service notification-service frontend; do
+          for component in customer-service loan-service product-service decision-service notification-service payment-provider frontend; do
             manifest="k8s/apps/${component}/deployment.yaml"
             sed -i -E "s|(image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/originate-${component}:).*|\\1sha-${GITHUB_SHA}|" "${manifest}"
           done

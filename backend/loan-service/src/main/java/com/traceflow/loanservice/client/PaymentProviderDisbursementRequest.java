@@ -1,0 +1,6 @@
+package com.traceflow.loanservice.client;
+
+import java.math.BigDecimal;
+
+public record PaymentProviderDisbursementRequest(String transactionId, BigDecimal amount) {
+}

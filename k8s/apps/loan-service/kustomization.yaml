@@ -13,10 +13,11 @@ configMapGenerator:
       - CUSTOMER_SERVICE_URL=http://customer-service:8081
       - PRODUCT_SERVICE_URL=http://product-service:8083
       - DECISION_SERVICE_URL=http://decision-service:8084
+      - PAYMENT_PROVIDER_URL=http://payment-provider:8090
+      - PAYMENT_PROVIDER_API_PATH=/v2/disbursements
       - CORS_ALLOWED_ORIGIN=http://34.142.232.167:30080
       - DEMO_ERROR_ENABLED=false
       - DEMO_BIGDECIMAL_ERROR_ENABLED=false
-      - DEMO_THIRD_PARTY_API_UPGRADE_ENABLED=true
 
 generatorOptions:
   labels:

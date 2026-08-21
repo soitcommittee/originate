@@ -55,6 +55,16 @@ services:
       - "8084"
     restart: unless-stopped
 
+  payment-provider:
+    build:
+      context: ./backend/payment-provider
+    image: originate/payment-provider:local
+    environment:
+      SERVER_PORT: 8090
+    expose:
+      - "8090"
+    restart: unless-stopped
+
   loan-service:
     build:
       context: ./backend/loan-service
@@ -64,6 +74,8 @@ services:
       CUSTOMER_SERVICE_URL: http://customer-service:8081
       PRODUCT_SERVICE_URL: http://product-service:8083
       DECISION_SERVICE_URL: http://decision-service:8084
+      PAYMENT_PROVIDER_URL: http://payment-provider:8090
+      PAYMENT_PROVIDER_API_PATH: ${PAYMENT_PROVIDER_API_PATH:-/v2/disbursements}
       DEMO_ERROR_ENABLED: ${DEMO_ERROR_ENABLED:-false}
       DEMO_BIGDECIMAL_ERROR_ENABLED: ${DEMO_BIGDECIMAL_ERROR_ENABLED:-false}
       APP_CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:3000}
@@ -81,6 +93,8 @@ services:
       product-service:
         condition: service_started
       decision-service:
+        condition: service_started
+      payment-provider:
         condition: service_started
     restart: unless-stopped
 

@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 @RestController
@@ -35,6 +39,19 @@ public class PaymentProviderController {
                     Instant.now(), 400, "REQUIRED_FIELD_MISSING", "currency is required and must be a 3-letter uppercase code", "currency"));
         }
         return ResponseEntity.ok(accepted(request, "v2"));
+    }
+
+    @PostMapping("/v3/disbursements")
+    public ResponseEntity<?> disburseV3(@Valid @RequestBody DisbursementRequest request) {
+        String providerReference = "PG-" + request.transactionId() + "-" + System.currentTimeMillis();
+        String changedTimestamp = LocalDateTime.now(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        log.warn("provider_response_contract_change apiVersion=v3 transactionId={} changedField=processedAt",
+                request.transactionId());
+        return ResponseEntity.ok(Map.of(
+                "providerReference", providerReference,
+                "apiVersion", "v3",
+                "processedAt", changedTimestamp));
     }
 
     private DisbursementResponse accepted(DisbursementRequest request, String version) {

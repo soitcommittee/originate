@@ -5,6 +5,7 @@ import com.traceflow.loanservice.exception.PaymentGatewayTimeoutException;
 import com.traceflow.loanservice.exception.ThirdPartyApiContractException;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
 
@@ -61,6 +62,20 @@ class DisbursementGatewayClientTests {
                 "http://provider.test", "/v2/disbursements");
 
         assertThrows(ThirdPartyApiContractException.class, () -> client.transferFunds(divisibleAmountLoan));
+        server.verify();
+    }
+
+    @Test
+    void transferFailsWhenProviderChangesTimestampFormatInSuccessfulResponse() {
+        var builder = org.springframework.web.client.RestClient.builder();
+        var server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("http://provider.test/v3/disbursements"))
+                .andRespond(withSuccess("{\"providerReference\":\"PG-test\",\"apiVersion\":\"v3\","
+                        + "\"processedAt\":\"21/08/2026 18:30\"}", APPLICATION_JSON));
+        DisbursementGatewayClient client = new DisbursementGatewayClient(builder, false, 3000,
+                "http://provider.test", "/v3/disbursements");
+
+        assertThrows(RestClientException.class, () -> client.transferFunds(divisibleAmountLoan));
         server.verify();
     }
 }

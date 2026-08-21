@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DecisionServiceImplTests {
     @Test
     void returnsEligibleRecommendationForAffordableApplication() {
-        var response = service(false).evaluate(request(new BigDecimal("50000.00"), 60));
+        var response = service().evaluate(request(new BigDecimal("48000.00"), 60));
 
         assertThat(response.creditScore()).isEqualTo(760);
         assertThat(response.interestRate()).isEqualByComparingTo("4.25");
@@ -22,21 +22,21 @@ class DecisionServiceImplTests {
 
     @Test
     void declinesApplicationOutsideProductAmountLimit() {
-        var response = service(false).evaluate(request(new BigDecimal("300000.00"), 60));
+        var response = service().evaluate(request(new BigDecimal("300000.00"), 60));
 
         assertThat(response.recommendation()).isEqualTo(DecisionRecommendation.DECLINE);
         assertThat(response.reason()).contains("amount");
     }
 
     @Test
-    void simulatesDecisionServiceFailureWhenEnabled() {
-        assertThatThrownBy(() -> service(true).evaluate(request(new BigDecimal("50000.00"), 60)))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Simulated decision service outage");
+    void failsWhenMonthlyPaymentHasNonTerminatingDecimalExpansion() {
+        assertThatThrownBy(() -> service().evaluate(request(new BigDecimal("50000.00"), 60)))
+                .isInstanceOf(ArithmeticException.class)
+                .hasMessageContaining("Non-terminating decimal expansion");
     }
 
-    private DecisionServiceImpl service(boolean demoDecisionErrorEnabled) {
-        return new DecisionServiceImpl(new InMemoryCreditPolicyRepository(), demoDecisionErrorEnabled);
+    private DecisionServiceImpl service() {
+        return new DecisionServiceImpl(new InMemoryCreditPolicyRepository());
     }
 
     private DecisionEvaluationRequest request(BigDecimal amount, int tenureMonths) {

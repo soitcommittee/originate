@@ -8,7 +8,6 @@ import com.traceflow.decisionservice.repositories.CreditPolicyRepository;
 import com.traceflow.decisionservice.services.DecisionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -19,26 +18,17 @@ import java.time.Instant;
 public class DecisionServiceImpl implements DecisionService {
     private static final Logger log = LoggerFactory.getLogger(DecisionServiceImpl.class);
     private final CreditPolicyRepository policyRepository;
-    private final boolean demoDecisionErrorEnabled;
 
-    public DecisionServiceImpl(
-            CreditPolicyRepository policyRepository,
-            @Value("${demo.decision.error.enabled:false}") boolean demoDecisionErrorEnabled) {
+    public DecisionServiceImpl(CreditPolicyRepository policyRepository) {
         this.policyRepository = policyRepository;
-        this.demoDecisionErrorEnabled = demoDecisionErrorEnabled;
     }
 
     @Override
     public DecisionEvaluationResponse evaluate(DecisionEvaluationRequest request) {
-        if (demoDecisionErrorEnabled) {
-            log.error("demo_decision_service_error customerId={} productCode={} reason=simulated_outage",
-                    request.customerId(), request.productCode());
-            throw new IllegalStateException("Simulated decision service outage");
-        }
-
         CreditPolicy policy = policyRepository.activePolicy();
-        BigDecimal annualIncome = request.monthlyIncome().multiply(BigDecimal.valueOf(12));
-        BigDecimal exposureRatio = request.requestedAmount().divide(annualIncome, 4, RoundingMode.HALF_UP);
+        BigDecimal monthlyPayment = request.requestedAmount()
+                .divide(BigDecimal.valueOf(request.tenureMonths()));
+        BigDecimal exposureRatio = monthlyPayment.divide(request.monthlyIncome(), 4, RoundingMode.HALF_UP);
 
         int score;
         BigDecimal premium;
@@ -75,8 +65,10 @@ public class DecisionServiceImpl implements DecisionService {
         }
 
         BigDecimal interestRate = request.baseInterestRate().add(premium).setScale(2, RoundingMode.HALF_UP);
-        log.info("credit_decision_evaluated customerId={} productCode={} exposureRatio={} creditScore={} recommendation={} interestRate={}",
-                request.customerId(), request.productCode(), exposureRatio, score, recommendation, interestRate);
+        log.info("credit_decision_evaluated customerId={} productCode={} monthlyPayment={} exposureRatio={} "
+                        + "creditScore={} recommendation={} interestRate={}",
+                request.customerId(), request.productCode(), monthlyPayment, exposureRatio, score, recommendation,
+                interestRate);
 
         return new DecisionEvaluationResponse(request.customerId(), request.productCode(), score, interestRate,
                 recommendation, reason, Instant.now());

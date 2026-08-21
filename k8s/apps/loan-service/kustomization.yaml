@@ -1,24 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
-namespace: originate
-
 resources:
   - deployment.yaml
-  - status-snapshot-cronjob.yaml
-
+  - service.yaml
 configMapGenerator:
   - name: loan-service-config
     literals:
-      - CUSTOMER_SERVICE_URL=http://customer-service:8081
-      - PRODUCT_SERVICE_URL=http://product-service:8083
-      - DECISION_SERVICE_URL=http://decision-service:8084
-      - PAYMENT_PROVIDER_URL=http://payment-provider:8090
-      - PAYMENT_PROVIDER_API_PATH=/v2/disbursements
-      - CORS_ALLOWED_ORIGIN=http://34.142.232.167:30080
-      - DEMO_ERROR_ENABLED=false
-
-generatorOptions:
-  labels:
-    app.kubernetes.io/name: loan-service
-    app.kubernetes.io/part-of: originate
+      - PAYMENT_PROVIDER_API_PATH=/v1/disbursements

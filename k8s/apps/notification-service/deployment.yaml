@@ -31,7 +31,7 @@ spec:
           emptyDir: {}
       containers:
         - name: notification-service
-          image: ghcr.io/soitcommittee/originate-notification-service:sha-ec6ce8eeaf3b1658ff847f80b8f3dd1671f25702
+          image: ghcr.io/soitcommittee/originate-notification-service:sha-ea2af19d7cc872d32195fb2cab14e673ba9f50c9
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false

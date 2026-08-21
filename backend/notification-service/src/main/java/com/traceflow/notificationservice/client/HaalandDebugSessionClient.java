@@ -6,6 +6,7 @@ import com.traceflow.notificationservice.exception.AlertDeliveryException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -16,6 +17,7 @@ public class HaalandDebugSessionClient {
     private final String apiBaseUrl;
     private final String authToken;
 
+    @Autowired
     public HaalandDebugSessionClient(RestClient.Builder builder,
                                      @Value("${haaland.api-base-url:}") String apiBaseUrl,
                                      @Value("${haaland.api-auth-token:}") String authToken) {

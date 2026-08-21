@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.traceflow.notificationservice.exception.AlertDeliveryException;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -36,6 +37,7 @@ public class KubernetesPodLogClient {
     private final Path caPath;
     private volatile HttpClient httpClient;
 
+    @Autowired
     public KubernetesPodLogClient(ObjectMapper objectMapper,
                                   @Value("${kubernetes.api-base-url:https://kubernetes.default.svc}") String apiBaseUrl,
                                   @Value("${kubernetes.workload-namespace:originate}") String namespace) {

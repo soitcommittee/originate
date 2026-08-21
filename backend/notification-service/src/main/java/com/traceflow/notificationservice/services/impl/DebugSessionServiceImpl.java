@@ -1,30 +1,22 @@
 package com.traceflow.notificationservice.services.impl;
 
+import com.traceflow.notificationservice.client.LarkWikiDocumentClient;
 import com.traceflow.notificationservice.dto.DebugSessionResponse;
 import com.traceflow.notificationservice.dto.PostmortemRequest;
 import com.traceflow.notificationservice.services.DebugSessionService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Service
 public class DebugSessionServiceImpl implements DebugSessionService {
     private static final String PIC = "29atly";
-    private static final DateTimeFormatter FILE_TIMESTAMP =
-            DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(java.time.ZoneOffset.UTC);
+    private final LarkWikiDocumentClient wikiClient;
 
-    private final Path outputDirectory;
-
-    public DebugSessionServiceImpl(
-            @Value("${postmortem.output-dir:docs/postmortems}") String outputDirectory) {
-        this.outputDirectory = Path.of(outputDirectory);
+    public DebugSessionServiceImpl(LarkWikiDocumentClient wikiClient) {
+        this.wikiClient = wikiClient;
     }
 
     @Override
@@ -37,18 +29,11 @@ public class DebugSessionServiceImpl implements DebugSessionService {
         String endpoint = value(details.endpoint(), "not provided");
         String requestId = value(details.requestId(), "not provided");
         String observedAt = value(details.observedAt(), createdAt.toString());
-        String filename = FILE_TIMESTAMP.format(createdAt) + "-" + safe(service) + "-" + sessionId + ".md";
-        Path document = outputDirectory.resolve(filename);
+        String markdown = render(sessionId, createdAt, service, errorCode, endpoint,
+                requestId, observedAt, details.notes());
+        String documentUrl = wikiClient.createDocument(service + " — " + errorCode + " — " + sessionId, markdown);
 
-        try {
-            Files.createDirectories(outputDirectory);
-            Files.writeString(document, render(sessionId, createdAt, service, errorCode, endpoint,
-                    requestId, observedAt, details.notes()));
-        } catch (IOException ex) {
-            throw new IllegalStateException("Unable to create postmortem document " + document, ex);
-        }
-
-        return new DebugSessionResponse(sessionId, document.toString(), PIC);
+        return new DebugSessionResponse(sessionId, documentUrl, PIC, true);
     }
 
     private String render(String sessionId, Instant createdAt, String service, String errorCode,
@@ -84,10 +69,6 @@ public class DebugSessionServiceImpl implements DebugSessionService {
                 + "- Add a dashboard panel and alert annotation for " + errorCode + ".\n"
                 + "- Document the rollback and recovery procedure.\n"
                 + "- Assign a permanent owner and review the integration contract.\n";
-    }
-
-    private String safe(String value) {
-        return value.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
     }
 
     private String value(String value, String fallback) {

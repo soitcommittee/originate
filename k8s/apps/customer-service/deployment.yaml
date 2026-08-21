@@ -20,7 +20,7 @@ spec:
         - name: ghcr-pull-secret
       containers:
         - name: customer-service
-          image: ghcr.io/soitcommittee/originate-customer-service:sha-8166ce567d870f7edc603c66019dab6bdc4841b4
+          image: ghcr.io/soitcommittee/originate-customer-service:sha-9ec4ef03b3c61df7779135b3b2a0f976673056cf
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

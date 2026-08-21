@@ -1,59 +1,43 @@
 package com.traceflow.loanservice.client;
 
-import com.traceflow.loanservice.domain.LoanApplication;
-import com.traceflow.loanservice.exception.PaymentGatewayTimeoutException;
-import com.traceflow.loanservice.exception.ThirdPartyApiContractException;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientResponseException;
+import java.math.BigDecimal;
+import java.util.regex.Pattern;
+
+import com.traceflow.loanservice.model.LoanApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.math.BigDecimal;
-import java.net.SocketTimeoutException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 @Component
 public class DisbursementGatewayClient {
-    private static final Logger log = LoggerFactory.getLogger(DisbursementGatewayClient.class);
 
-    private final boolean demoErrorEnabled;
+    private static final Logger log = LoggerFactory.getLogger(DisbursementGatewayClient.class);
+    private static final Pattern CURRENCY_PATTERN = Pattern.compile("^[A-Z]{3}$");
+
     private final RestClient paymentProvider;
     private final String paymentProviderApiPath;
-    private final long simulatedTimeoutMs;
+    private final String defaultCurrency;
 
     public DisbursementGatewayClient(
-            RestClient.Builder restClientBuilder,
-            @Value("${demo.error.enabled:false}") boolean demoErrorEnabled,
-            @Value("${demo.error.simulated-timeout-ms:3000}") long simulatedTimeoutMs,
-            @Value("${payment.provider.url:http://localhost:8090}") String paymentProviderUrl,
-            @Value("${payment.provider.api-path:/v1/disbursements}") String paymentProviderApiPath) {
-        this.demoErrorEnabled = demoErrorEnabled;
-        this.simulatedTimeoutMs = simulatedTimeoutMs;
-        this.paymentProvider = restClientBuilder.baseUrl(paymentProviderUrl).build();
+            RestClient paymentProvider,
+            @Value("${PAYMENT_PROVIDER_API_PATH}") String paymentProviderApiPath,
+            @Value("${payment.default-currency:USD}") String defaultCurrency) {
+        this.paymentProvider = paymentProvider;
         this.paymentProviderApiPath = paymentProviderApiPath;
+        this.defaultCurrency = defaultCurrency;
     }
 
-    public void transferFunds(LoanApplication loan) {
-        String transactionId = "DISB-" + loan.getId() + "-01";
-        log.info("payment_gateway_request_started loanApplicationId={} transactionId={} amount={}",
-                loan.getId(), transactionId, loan.getRequestedAmount());
-
-        if (demoErrorEnabled) {
-            log.warn("payment_gateway_request_retry loanApplicationId={} transactionId={} attempt=2 reason=read_timeout",
-                    loan.getId(), transactionId);
-            SocketTimeoutException rootCause = new SocketTimeoutException(
-                    "Read timed out calling POST /v1/disbursements after " + simulatedTimeoutMs + "ms");
-            throw new PaymentGatewayTimeoutException(
-                    "Payment gateway failed after 2 attempts for transaction " + transactionId, rootCause);
-        }
-
+    public void transferFunds(LoanApplication loan, String transactionId) {
         BigDecimal settlementAmount = calculateSettlementAmount(loan);
 
         try {
+            String currency = resolveCurrency(loan);
             PaymentProviderDisbursementResponse response = paymentProvider.post()
                     .uri(paymentProviderApiPath)
-                    .body(new PaymentProviderDisbursementRequest(transactionId, settlementAmount))
+                    .body(new PaymentProviderDisbursementRequest(transactionId, settlementAmount, currency))
                     .retrieve()
                     .body(PaymentProviderDisbursementResponse.class);
             log.info("payment_gateway_request_succeeded loanApplicationId={} transactionId={} providerReference={}",
@@ -61,7 +45,7 @@ public class DisbursementGatewayClient {
         } catch (RestClientResponseException ex) {
             if (ex.getStatusCode().value() == 400) {
                 log.error("third_party_api_contract_mismatch loanApplicationId={} providerApiPath={} "
-                                + "legacyPayloadFields=transactionId,amount providerResponse={}",
+                                + "legacyPayloadFields=transactionId,amount,currency providerResponse={}",
                         loan.getId(), paymentProviderApiPath, ex.getResponseBodyAsString(), ex);
                 throw new ThirdPartyApiContractException(
                         "Third-party disbursement API rejected the legacy payload; its contract has changed");
@@ -70,10 +54,19 @@ public class DisbursementGatewayClient {
         }
     }
 
+    private String resolveCurrency(LoanApplication loan) {
+        String currency = loan == null ? null : loan.getCurrency();
+        if (currency != null && CURRENCY_PATTERN.matcher(currency).matches()) {
+            return currency;
+        }
+        currency = defaultCurrency;
+        if (currency != null && CURRENCY_PATTERN.matcher(currency).matches()) {
+            return currency;
+        }
+        throw new IllegalArgumentException("Disbursement currency must match ^[A-Z]{3}$");
+    }
+
     private BigDecimal calculateSettlementAmount(LoanApplication loan) {
-        BigDecimal processingFee = loan.getRequestedAmount()
-                .multiply(new BigDecimal("0.01"))
-                .divide(BigDecimal.valueOf(3));
-        return loan.getRequestedAmount().add(processingFee);
+        return loan.getAmount();
     }
 }

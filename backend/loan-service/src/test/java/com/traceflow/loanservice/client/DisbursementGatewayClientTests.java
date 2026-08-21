@@ -19,6 +19,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 class DisbursementGatewayClientTests {
     private final LoanApplication loan = new LoanApplication(
             1L, "Test Applicant", new BigDecimal("50000"), 60, "Home renovation");
+    private final LoanApplication divisibleAmountLoan = new LoanApplication(
+            1L, "Test Applicant", new BigDecimal("60000"), 60, "Home renovation");
 
     @Test
     void transferSucceedsWhenDemoFailureIsDisabled() {
@@ -26,25 +28,25 @@ class DisbursementGatewayClientTests {
         var server = MockRestServiceServer.bindTo(builder).build();
         server.expect(requestTo("http://provider.test/v1/disbursements"))
                 .andRespond(withSuccess("{\"providerReference\":\"PG-test\",\"apiVersion\":\"v1\",\"processedAt\":\"2026-01-01T00:00:00Z\"}", APPLICATION_JSON));
-        DisbursementGatewayClient client = new DisbursementGatewayClient(builder, false, 3000, false,
+        DisbursementGatewayClient client = new DisbursementGatewayClient(builder, false, 3000,
                 "http://provider.test", "/v1/disbursements");
-        assertDoesNotThrow(() -> client.transferFunds(loan));
+        assertDoesNotThrow(() -> client.transferFunds(divisibleAmountLoan));
         server.verify();
     }
 
     @Test
     void transferPreservesNestedTimeoutCauseWhenDemoFailureIsEnabled() {
         DisbursementGatewayClient client = new DisbursementGatewayClient(org.springframework.web.client.RestClient.builder(), true,
-                3000, false, "http://provider.test", "/v1/disbursements");
+                3000, "http://provider.test", "/v1/disbursements");
         PaymentGatewayTimeoutException error = assertThrows(
                 PaymentGatewayTimeoutException.class, () -> client.transferFunds(loan));
         assertInstanceOf(java.net.SocketTimeoutException.class, error.getCause());
     }
 
     @Test
-    void transferFailsWithBigDecimalConversionErrorWhenDemoFlagIsEnabled() {
+    void transferFailsWithBigDecimalArithmeticErrorForNonDivisibleProcessingFee() {
         DisbursementGatewayClient client = new DisbursementGatewayClient(org.springframework.web.client.RestClient.builder(), false,
-                3000, true, "http://provider.test", "/v1/disbursements");
+                3000, "http://provider.test", "/v1/disbursements");
 
         assertThrows(ArithmeticException.class, () -> client.transferFunds(loan));
     }
@@ -55,10 +57,10 @@ class DisbursementGatewayClientTests {
         var server = MockRestServiceServer.bindTo(builder).build();
         server.expect(requestTo("http://provider.test/v2/disbursements"))
                 .andRespond(withBadRequest().body("{\"code\":\"REQUIRED_FIELD_MISSING\",\"requiredField\":\"currency\"}"));
-        DisbursementGatewayClient client = new DisbursementGatewayClient(builder, false, 3000, false,
+        DisbursementGatewayClient client = new DisbursementGatewayClient(builder, false, 3000,
                 "http://provider.test", "/v2/disbursements");
 
-        assertThrows(ThirdPartyApiContractException.class, () -> client.transferFunds(loan));
+        assertThrows(ThirdPartyApiContractException.class, () -> client.transferFunds(divisibleAmountLoan));
         server.verify();
     }
 }

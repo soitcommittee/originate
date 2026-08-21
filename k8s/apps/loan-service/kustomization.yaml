@@ -17,7 +17,6 @@ configMapGenerator:
       - PAYMENT_PROVIDER_API_PATH=/v2/disbursements
       - CORS_ALLOWED_ORIGIN=http://34.142.232.167:30080
       - DEMO_ERROR_ENABLED=false
-      - DEMO_BIGDECIMAL_ERROR_ENABLED=false
 
 generatorOptions:
   labels:

@@ -2,6 +2,7 @@ package com.traceflow.loanservice.client;
 
 import com.traceflow.loanservice.domain.LoanApplication;
 import com.traceflow.loanservice.exception.PaymentGatewayTimeoutException;
+import com.traceflow.loanservice.exception.ThirdPartyApiContractException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -16,13 +17,13 @@ class DisbursementGatewayClientTests {
 
     @Test
     void transferSucceedsWhenDemoFailureIsDisabled() {
-        DisbursementGatewayClient client = new DisbursementGatewayClient(false, 3000, false);
+        DisbursementGatewayClient client = new DisbursementGatewayClient(false, 3000, false, false);
         assertDoesNotThrow(() -> client.transferFunds(loan));
     }
 
     @Test
     void transferPreservesNestedTimeoutCauseWhenDemoFailureIsEnabled() {
-        DisbursementGatewayClient client = new DisbursementGatewayClient(true, 3000, false);
+        DisbursementGatewayClient client = new DisbursementGatewayClient(true, 3000, false, false);
         PaymentGatewayTimeoutException error = assertThrows(
                 PaymentGatewayTimeoutException.class, () -> client.transferFunds(loan));
         assertInstanceOf(java.net.SocketTimeoutException.class, error.getCause());
@@ -30,8 +31,15 @@ class DisbursementGatewayClientTests {
 
     @Test
     void transferFailsWithBigDecimalConversionErrorWhenDemoFlagIsEnabled() {
-        DisbursementGatewayClient client = new DisbursementGatewayClient(false, 3000, true);
+        DisbursementGatewayClient client = new DisbursementGatewayClient(false, 3000, true, false);
 
         assertThrows(ArithmeticException.class, () -> client.transferFunds(loan));
+    }
+
+    @Test
+    void transferFailsWhenProviderUpgradesItsApiContract() {
+        DisbursementGatewayClient client = new DisbursementGatewayClient(false, 3000, false, true);
+
+        assertThrows(ThirdPartyApiContractException.class, () -> client.transferFunds(loan));
     }
 }

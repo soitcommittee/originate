@@ -23,6 +23,14 @@ public class GlobalExceptionHandler {
                 "Disbursement is temporarily unavailable. Retry after the payment gateway recovers.");
     }
 
+    @ExceptionHandler(ThirdPartyApiContractException.class)
+    public ResponseEntity<ErrorResponse> handleThirdPartyContractMismatch(ThirdPartyApiContractException ex) {
+        log.error("production_incident component=third-party-disbursement operation=disburse errorCode={} message={}",
+                ErrorCode.THIRD_PARTY_API_CONTRACT_MISMATCH, ex.getMessage(), ex);
+        return response(HttpStatus.BAD_GATEWAY, ErrorCode.THIRD_PARTY_API_CONTRACT_MISMATCH.name(),
+                "Disbursement provider API changed and rejected the legacy request payload.");
+    }
+
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ErrorResponse> handleAppException(AppException ex) {
         if (ex.getStatus().is5xxServerError()) {
@@ -54,4 +62,3 @@ public class GlobalExceptionHandler {
                 Instant.now(), status.value(), code, message, MDC.get("requestId")));
     }
 }
-

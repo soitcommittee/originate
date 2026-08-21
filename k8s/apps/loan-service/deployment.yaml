@@ -72,6 +72,11 @@ spec:
                 configMapKeyRef:
                   name: loan-service-config
                   key: DEMO_BIGDECIMAL_ERROR_ENABLED
+            - name: DEMO_THIRD_PARTY_API_UPGRADE_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: loan-service-config
+                  key: DEMO_THIRD_PARTY_API_UPGRADE_ENABLED
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

@@ -2,6 +2,7 @@ package com.traceflow.loanservice.client;
 
 import com.traceflow.loanservice.domain.LoanApplication;
 import com.traceflow.loanservice.exception.PaymentGatewayTimeoutException;
+import com.traceflow.loanservice.exception.ThirdPartyApiContractException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,15 +18,18 @@ public class DisbursementGatewayClient {
 
     private final boolean demoErrorEnabled;
     private final boolean demoBigDecimalErrorEnabled;
+    private final boolean demoThirdPartyApiUpgradeEnabled;
     private final long simulatedTimeoutMs;
 
     public DisbursementGatewayClient(
             @Value("${demo.error.enabled:false}") boolean demoErrorEnabled,
             @Value("${demo.error.simulated-timeout-ms:3000}") long simulatedTimeoutMs,
-            @Value("${demo.bigdecimal.error.enabled:false}") boolean demoBigDecimalErrorEnabled) {
+            @Value("${demo.bigdecimal.error.enabled:false}") boolean demoBigDecimalErrorEnabled,
+            @Value("${demo.third-party.api-upgrade.enabled:false}") boolean demoThirdPartyApiUpgradeEnabled) {
         this.demoErrorEnabled = demoErrorEnabled;
         this.simulatedTimeoutMs = simulatedTimeoutMs;
         this.demoBigDecimalErrorEnabled = demoBigDecimalErrorEnabled;
+        this.demoThirdPartyApiUpgradeEnabled = demoThirdPartyApiUpgradeEnabled;
     }
 
     public void transferFunds(LoanApplication loan) {
@@ -40,6 +44,14 @@ public class DisbursementGatewayClient {
             log.warn("demo_bigdecimal_conversion_error loanApplicationId={} amount={}",
                     loan.getId(), amountWithCents);
             amountWithCents.intValueExact();
+        }
+
+        if (demoThirdPartyApiUpgradeEnabled) {
+            log.error("demo_third_party_api_contract_mismatch loanApplicationId={} providerApiVersion=v2 "
+                            + "missingRequiredField=currency sentPayloadVersion=v1",
+                    loan.getId());
+            throw new ThirdPartyApiContractException(
+                    "Third-party disbursement API v2 requires the new field 'currency'");
         }
 
         if (demoErrorEnabled) {

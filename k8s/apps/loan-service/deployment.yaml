@@ -20,7 +20,7 @@ spec:
         - name: ghcr-pull-secret
       containers:
         - name: loan-service
-          image: ghcr.io/soitcommittee/originate-loan-service:sha-9ec4ef03b3c61df7779135b3b2a0f976673056cf
+          image: ghcr.io/soitcommittee/originate-loan-service:sha-ec6ce8eeaf3b1658ff847f80b8f3dd1671f25702
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

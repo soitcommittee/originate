@@ -26,6 +26,9 @@ spec:
         fsGroup: 10001
         seccompProfile:
           type: RuntimeDefault
+      volumes:
+        - name: postmortem-documents
+          emptyDir: {}
       containers:
         - name: notification-service
           image: ghcr.io/soitcommittee/originate-notification-service:sha-ec6ce8eeaf3b1658ff847f80b8f3dd1671f25702
@@ -38,9 +41,14 @@ spec:
           ports:
             - name: http
               containerPort: 8085
+          volumeMounts:
+            - name: postmortem-documents
+              mountPath: /app/docs
           env:
             - name: SERVER_PORT
               value: "8085"
+            - name: POSTMORTEM_OUTPUT_DIR
+              value: /app/docs/postmortems
             - name: LARK_WEBHOOK_CUSTOMER_SERVICE
               valueFrom:
                 secretKeyRef:

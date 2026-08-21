@@ -20,7 +20,7 @@ spec:
         - name: ghcr-pull-secret
       containers:
         - name: frontend
-          image: ghcr.io/chiewhui1113/originate-frontend:sha-9617c5bea2f2ff6ac64a84d6e765d1dc37f4c1ca
+          image: ghcr.io/soitcommittee/originate-frontend:sha-9617c5bea2f2ff6ac64a84d6e765d1dc37f4c1ca
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

@@ -4,12 +4,6 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - k8s/**
-      - argocd/**
-      - .claude/**
-      - docs/**
-      - README.md
   workflow_dispatch:
 
 permissions:

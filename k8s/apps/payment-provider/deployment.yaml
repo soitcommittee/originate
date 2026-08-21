@@ -20,7 +20,7 @@ spec:
         - name: ghcr-pull-secret
       containers:
         - name: payment-provider
-          image: ghcr.io/chiewhui1113/originate-payment-provider:sha-398a816e255aec06334940cf7e4ce8c968fd921f
+          image: ghcr.io/chiewhui1113/originate-payment-provider:sha-b41f7720ff391b334b54e56cfd532e3a2d8faccc
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

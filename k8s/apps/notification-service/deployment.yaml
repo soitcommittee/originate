@@ -27,7 +27,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: notification-service
-          image: ghcr.io/soitcommittee/originate-notification-service:sha-722f65030f757d6f6f54ad3663df5d144bea4c3f
+          image: ghcr.io/soitcommittee/originate-notification-service:sha-83c9367ced0957d52503ae8fe43fb73605399e84
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false

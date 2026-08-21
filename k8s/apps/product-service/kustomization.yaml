@@ -9,7 +9,7 @@ resources:
 configMapGenerator:
   - name: product-service-config
     literals:
-      - DEMO_PRODUCT_ERROR_ENABLED=true
+      - DEMO_PRODUCT_ERROR_ENABLED=false
 
 generatorOptions:
   labels:

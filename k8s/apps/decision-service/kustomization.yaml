@@ -9,7 +9,7 @@ resources:
 configMapGenerator:
   - name: decision-service-config
     literals:
-      - DEMO_DECISION_ERROR_ENABLED=true
+      - DEMO_DECISION_ERROR_ENABLED=false
 
 generatorOptions:
   labels:

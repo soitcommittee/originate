@@ -20,7 +20,7 @@ Kubernetes CronJob (every 5 minutes)
 
 `customer-service` owns borrower and affordability data. `product-service` owns loan limits, tenures and base rates. `decision-service` owns the affordability score and credit recommendation. `loan-service` orchestrates the compact origination workflow and stores the resulting application state. Customer and loan records use separate schemas in the persistent PostgreSQL instance. The frontend is an operations UI and Nginx reverse proxy; it does not own business rules. Batch containers call an internal service contract instead of connecting to another service's database.
 
-`notification-service` is infrastructure-facing: Alertmanager calls its internal webhook API, then it routes a masked alert message to the Lark webhook configured for the affected service. Prometheus, Alertmanager and Blackbox Exporter run in the `monitoring` namespace; their UIs and the notification API remain internal ClusterIP services.
+`notification-service` is infrastructure-facing: Alertmanager calls separate internal webhook paths for Lark and automated debugging. The Lark path routes a masked alert message to the webhook configured for the affected service. For firing alerts, the debug path reads recent logs from the affected pod with a namespace-scoped read-only service account, extracts only the error/exception block, and requests a Haaland debug session. Prometheus, Alertmanager and Blackbox Exporter run in the `monitoring` namespace; their UIs and the notification API remain internal ClusterIP services.
 
 ## Target service map
 

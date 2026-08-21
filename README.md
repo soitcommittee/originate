@@ -10,7 +10,7 @@ Originate is a Spring Boot and React loan-origination demo with GitHub container
 | `loan-service` | Application, approval, acceptance and disbursement workflow | 8082 |
 | `product-service` | Loan product limits, base rates and tenures | 8083 |
 | `decision-service` | Affordability scoring and credit recommendations | 8084 |
-| `notification-service` | Alertmanager webhook and per-service Lark routing | 8085 |
+| `notification-service` | Alertmanager routing to per-service Lark groups and Haaland debugging | 8085 |
 | `originate-postgres` | Persistent customer and loan portfolio data | 5432 |
 | `frontend` | Loan operations portal and API reverse proxy | 80 |
 

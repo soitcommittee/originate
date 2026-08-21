@@ -16,6 +16,7 @@ spec:
         app.kubernetes.io/name: notification-service
         app.kubernetes.io/part-of: originate
     spec:
+      serviceAccountName: notification-service
       imagePullSecrets:
         - name: ghcr-pull-secret
       securityContext:
@@ -82,6 +83,17 @@ spec:
                   name: lark-webhook-secrets
                   key: platform
                   optional: true
+            - name: HAALAND_API_BASE_URL
+              value: "https://34-143-201-173.sslip.io"
+            - name: HAALAND_API_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: haaland-api-credentials
+                  key: auth-token
+            - name: HAALAND_REPO_URL
+              value: "https://github.com/chiewhui1113/originate.git"
+            - name: HAALAND_BASE_REF
+              value: "main"
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

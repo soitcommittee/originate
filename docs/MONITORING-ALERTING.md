@@ -10,10 +10,14 @@ Spring Boot HTTP metrics
        alert rule (HTTP 5xx)
               |
          Alertmanager
-              |
-  notification-service internal API
-              |
-      service-specific Lark group
+              |-----------------------------|
+  notification-service Lark API    notification-service debug API
+              |                             |
+      service-specific Lark group   recent affected-pod logs
+                                             |
+                                    error/exception excerpt only
+                                             |
+                                    Haaland debug session API
 ```
 
 Prometheus raises `Excessive5xxErrors` when one backend service returns at least three HTTP 5xx responses in five minutes. Service availability is still collected for inspection, but it does not send Lark alerts during normal rolling deployments. Alertmanager groups, deduplicates and retries delivery; resolved notifications are sent when the 5xx error rate recovers.
@@ -51,6 +55,21 @@ unset FRONTEND_WEBHOOK NOTIFICATION_WEBHOOK PLATFORM_WEBHOOK
 ```
 
 The same webhook may be entered more than once while the team is still creating separate groups.
+
+Create the Haaland API credential separately. Do not put its token in a manifest or commit it:
+
+```bash
+read -rsp "Haaland API auth token: " HAALAND_TOKEN; echo
+
+sudo kubectl create secret generic haaland-api-credentials \
+  -n originate \
+  --from-literal=auth-token="$HAALAND_TOKEN" \
+  --dry-run=client -o yaml | sudo kubectl apply -f -
+
+unset HAALAND_TOKEN
+```
+
+The notification service account can only list/get pods and read pod logs in `originate`. For a firing alert, the service reads at most 400 lines from the affected service over the previous 15 minutes, extracts the most recent error/exception block (up to 80 lines or 8,000 characters), and sends only that excerpt to Haaland. Resolved alerts do not create debug sessions.
 
 ## 3. Verify the deployment
 
@@ -100,5 +119,6 @@ Then open `http://127.0.0.1:9090/alerts` or `http://127.0.0.1:9093` through the 
 - Prometheus targets: `k8s/apps/monitoring/prometheus.yml`
 - Grouping and retry: `k8s/apps/monitoring/alertmanager.yml`
 - Per-group delivery API: `POST /api/alerts/alertmanager` on `notification-service`
+- Debug-session delivery API: `POST /api/alerts/haaland` on `notification-service`
 
 Do not expose Prometheus, Alertmanager, or `notification-service` with a public NodePort.

@@ -16,5 +16,5 @@ receivers:
       - url: http://notification-service.originate.svc.cluster.local:8085/api/alerts/alertmanager
         send_resolved: true
 
-      - url: http://agent-fastapi.originate.svc.cluster.local:8000/v1/alerts
+      - url: http://notification-service.originate.svc.cluster.local:8085/api/alerts/haaland
         send_resolved: true

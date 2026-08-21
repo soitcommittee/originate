@@ -20,7 +20,7 @@ Spring Boot HTTP metrics
                                     Haaland debug session API
 ```
 
-Prometheus raises `Excessive5xxErrors` when one backend service returns at least three HTTP 5xx responses in five minutes. Service availability is still collected for inspection, but it does not send Lark alerts during normal rolling deployments. Alertmanager groups, deduplicates and retries delivery; resolved notifications are sent when the 5xx error rate recovers.
+Prometheus raises `Excessive5xxErrors` on the first HTTP 5xx response from a backend service. Metrics and alert rules are checked every five seconds, and Alertmanager forwards a new alert without an additional grouping delay. Delivery normally begins within about five to ten seconds of the failed request. Service availability is still collected for inspection, but it does not send Lark alerts during normal rolling deployments. Alertmanager deduplicates and retries delivery; resolved notifications are sent when the 5xx error rate recovers.
 
 ## 1. Create the Lark bots
 

@@ -41,6 +41,7 @@ class AlertDeliveryServiceImplTests {
         assertThat(response.service()).isEqualTo("loan-service");
         assertThat(response.alertStatus()).isEqualTo("FIRING");
         verify(client).sendText(contains("example.invalid"), contains("Service: loan-service"));
+        verify(client).sendText(contains("example.invalid"), contains("Started at: 16 Aug 2026, 8:00:00 AM MYT"));
     }
 
     @Test
@@ -87,10 +88,10 @@ class AlertDeliveryServiceImplTests {
         labels.putIfAbsent("alertname", "Excessive5xxErrors");
         labels.putIfAbsent("severity", "critical");
         var alert = new AlertmanagerWebhook.Alert("firing", labels,
-                Map.of("summary", "High error volume", "description", "Three errors in five minutes"),
+                Map.of("summary", "High error volume", "description", "One error in five minutes"),
                 "2026-08-16T00:00:00Z", null, "http://prometheus/graph", "fingerprint");
         return new AlertmanagerWebhook(status, commonLabels,
-                Map.of("summary", "High error volume", "description", "Three errors in five minutes"),
+                Map.of("summary", "High error volume", "description", "One error in five minutes"),
                 List.of(alert));
     }
 }

@@ -11,12 +11,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
 public class AlertDeliveryServiceImpl implements AlertDeliveryService {
     private static final Logger log = LoggerFactory.getLogger(AlertDeliveryServiceImpl.class);
+    private static final DateTimeFormatter MALAYSIA_TIME_FORMAT = DateTimeFormatter
+            .ofPattern("dd MMM yyyy, h:mm:ss a z", Locale.ENGLISH)
+            .withZone(ZoneId.of("Asia/Kuala_Lumpur"));
 
     private final LarkWebhookRegistry webhookRegistry;
     private final LarkWebhookClient webhookClient;
@@ -67,8 +75,17 @@ public class AlertDeliveryServiceImpl implements AlertDeliveryService {
                 + "Alert count: " + webhook.alerts().size() + "\n"
                 + "Summary: " + valueOrDefault(summary, "No summary provided") + "\n"
                 + "Description: " + valueOrDefault(description, "No description provided") + "\n"
-                + "Started at: " + valueOrDefault(first.startsAt(), "unknown") + "\n"
-                + "Prometheus: " + valueOrDefault(first.generatorURL(), "not available");
+                + "Started at: " + formatMalaysiaTime(first.startsAt());
+    }
+
+    private String formatMalaysiaTime(String timestamp) {
+        if (timestamp == null || timestamp.isBlank()) return "unknown";
+        try {
+            return MALAYSIA_TIME_FORMAT.format(Instant.parse(timestamp));
+        } catch (DateTimeParseException exception) {
+            log.warn("alert_timestamp_parse_failed timestamp={}", timestamp);
+            return timestamp;
+        }
     }
 
     private String value(Map<String, String> values, String key) {

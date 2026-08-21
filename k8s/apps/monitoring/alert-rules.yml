@@ -8,8 +8,7 @@ groups:
               service=~"(customer|loan|product|decision)-service",
               status=~"5.."
             }[5m])
-          ) >= 3
-        for: 30s
+          ) >= 1
         labels:
           severity: critical
         annotations:
